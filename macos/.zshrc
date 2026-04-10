@@ -79,6 +79,15 @@ _fzf_comprun() {
     esac
 }
 
+# ── zsh-autosuggestions + syntax-highlighting ─────────────────────────────
+# Equivalent of PSReadLine's PredictionSource History + syntax highlighting
+if [[ -f "$(brew --prefix)/share/zsh-autosuggestions/zsh-autosuggestions.zsh" ]]; then
+    source "$(brew --prefix)/share/zsh-autosuggestions/zsh-autosuggestions.zsh"
+fi
+if [[ -f "$(brew --prefix)/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ]]; then
+    source "$(brew --prefix)/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
+fi
+
 # ── zi: interactive zoxide+fzf directory jump ──────────────────────────
 # zoxide 0.9+ registers zi automatically via "zoxide init"; define it here as
 # a safe fallback and to guarantee the preview window is always present.

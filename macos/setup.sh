@@ -102,7 +102,10 @@ ensure_package fzf
 ensure_package fd
 ensure_package tree
 ensure_package bat
-if [[ "${SHELL_NAME}" == "bash" ]]; then
+if [[ "${SHELL_NAME}" == "zsh" ]]; then
+    ensure_package zsh-autosuggestions
+    ensure_package zsh-syntax-highlighting
+elif [[ "${SHELL_NAME}" == "bash" ]]; then
     ensure_package bash-completion@2
 fi
 
