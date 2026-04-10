@@ -25,7 +25,7 @@ Clone this repo, then run the platform setup script. It installs dependencies an
 ### Windows (PowerShell)
 
 ```powershell
-git clone <repo-url> ~/Repos/dotfiles
+git clone git@github.com:Pa1eShad0w/dotfiles.git ~/Repos/dotfiles
 ~/Repos/dotfiles/windows/setup.ps1
 ```
 
@@ -34,7 +34,7 @@ git clone <repo-url> ~/Repos/dotfiles
 ### macOS (Bash/Zsh)
 
 ```bash
-git clone <repo-url> ~/Repos/dotfiles
+git clone git@github.com:Pa1eShad0w/dotfiles.git ~/Repos/dotfiles
 ~/Repos/dotfiles/macos/setup.sh
 ```
 
