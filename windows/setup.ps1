@@ -90,9 +90,18 @@ function New-Symlink {
         New-Item -ItemType Directory -Path $targetDir -Force | Out-Null
     }
 
-    # Remove existing file/symlink at target
+    # Handle existing file at target
     if (Test-Path $Target) {
-        Remove-Item $Target -Force
+        $item = Get-Item $Target -Force
+        if ($item.Attributes -band [IO.FileAttributes]::ReparsePoint) {
+            # Existing symlink — safe to remove
+            Remove-Item $Target -Force
+        } else {
+            # Real file — rename to .old and warn
+            $oldPath = "$Target.old"
+            Move-Item $Target $oldPath -Force
+            Write-Host "  已将原配置重命名为: $oldPath" -ForegroundColor Yellow
+        }
     }
 
     New-Item -ItemType SymbolicLink -Path $Target -Target $Source -Force | Out-Null

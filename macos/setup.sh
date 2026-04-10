@@ -61,8 +61,15 @@ create_symlink() {
     local src="$1"
     local dst="$2"
     mkdir -p "$(dirname "$dst")"
-    # Remove existing file/symlink at target
-    rm -f "$dst"
+    # Handle existing file at target
+    if [[ -L "$dst" ]]; then
+        # Existing symlink — safe to remove
+        rm -f "$dst"
+    elif [[ -f "$dst" ]]; then
+        # Real file — rename to .old and warn
+        mv "$dst" "${dst}.old"
+        printf "  已将原配置重命名为: %s.old\n" "$dst"
+    fi
     ln -s "$src" "$dst"
     printf "  %s -> %s\n" "$dst" "$src"
 }
