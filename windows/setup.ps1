@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
-[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
-[Console]::InputEncoding  = [System.Text.Encoding]::UTF8
-
 param(
     [switch]$SkipWingetInstall
 )
+
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+[Console]::InputEncoding  = [System.Text.Encoding]::UTF8
 
 $ErrorActionPreference = "Stop"
 
@@ -104,7 +104,7 @@ function New-Symlink {
             # Real file — rename to .old and warn
             $oldPath = "$Target.old"
             Move-Item $Target $oldPath -Force
-            Write-Host "  已将原配置重命名为: $oldPath" -ForegroundColor Yellow
+            Write-Host "  Renamed existing config to: $oldPath" -ForegroundColor Yellow
         }
     }
 
@@ -113,34 +113,34 @@ function New-Symlink {
 }
 
 try {
-    Write-Step "备份现有配置"
+    Write-Step "Backing up existing config"
     Backup-IfExists -Path $profileTarget
     Backup-IfExists -Path $themeTarget
 
-    Write-Step "确保 NuGet Provider 可用"
+    Write-Step "Ensuring NuGet provider"
     if (-not (Get-PackageProvider -Name NuGet -ListAvailable -ErrorAction SilentlyContinue)) {
         Install-PackageProvider -Name NuGet -Scope CurrentUser -Force -SkipPublisherCheck | Out-Null
     }
 
-    Write-Step "安装/确认 oh-my-posh"
+    Write-Step "Installing/verifying oh-my-posh"
     $ompCmd = Get-Command oh-my-posh -ErrorAction SilentlyContinue
     if (-not $ompCmd) {
         if ($SkipWingetInstall) {
-            Write-Host "Skip winget install by flag. 请手动安装 oh-my-posh。" -ForegroundColor Yellow
+            Write-Host "Skip winget install by flag. Please install oh-my-posh manually." -ForegroundColor Yellow
         } else {
             $wingetCmd = Get-Command winget -ErrorAction SilentlyContinue
             if ($wingetCmd) {
                 Write-Host "Installing oh-my-posh via winget..." -ForegroundColor Yellow
                 winget install JanDeDobbeleer.OhMyPosh -s winget --accept-package-agreements --accept-source-agreements
             } else {
-                Write-Host "winget 不可用，请手动安装 oh-my-posh: https://ohmyposh.dev/docs/installation/windows" -ForegroundColor Yellow
+                Write-Host "winget not available. Please install oh-my-posh manually: https://ohmyposh.dev/docs/installation/windows" -ForegroundColor Yellow
             }
         }
     } else {
         Write-Host "oh-my-posh exists." -ForegroundColor DarkGray
     }
 
-    Write-Step "安装/确认 zoxide + fzf"
+    Write-Step "Installing/verifying zoxide + fzf"
     $wingetCmd = Get-Command winget -ErrorAction SilentlyContinue
     if ($wingetCmd) {
         foreach ($pkg in @("ajeetdsouza.zoxide", "junegunn.fzf")) {
@@ -153,10 +153,10 @@ try {
             }
         }
     } else {
-        Write-Host "winget 不可用，请手动安装 zoxide 和 fzf" -ForegroundColor Yellow
+        Write-Host "winget not available. Please install zoxide and fzf manually." -ForegroundColor Yellow
     }
 
-    Write-Step "安装/确认 PowerShell 模块"
+    Write-Step "Installing/verifying PowerShell modules"
     Ensure-Module -Name PSReadLine    -MinimumVersion ([version]"2.2.6")
     Ensure-Module -Name posh-git
     Ensure-Module -Name Terminal-Icons
@@ -166,36 +166,36 @@ try {
         Write-Host "PSFzf ready: $($psfzfMod.Version) [$($psfzfMod.ModuleBase)]" -ForegroundColor DarkGray
     }
 
-    Write-Step "校验 PSReadLine 版本"
+    Write-Step "Verifying PSReadLine version"
     $psReadLine = Get-HighestInstalledModule -Name PSReadLine
-    if (-not $psReadLine) { throw "PSReadLine 未安装成功。" }
+    if (-not $psReadLine) { throw "PSReadLine installation failed." }
     if ($psReadLine.Version -lt [version]"2.2.6") {
-        throw "PSReadLine 版本过低: $($psReadLine.Version)，需要 >= 2.2.6"
+        throw "PSReadLine version too old: $($psReadLine.Version), requires >= 2.2.6"
     }
     Write-Host "PSReadLine ready: $($psReadLine.Version) [$($psReadLine.ModuleBase)]" -ForegroundColor DarkGray
 
-    Write-Step "创建 symlink"
+    Write-Step "Creating symlinks"
     New-Symlink -Source $profileSource -Target $profileTarget
     New-Symlink -Source $themeSource   -Target $themeTarget
 
-    Write-Step "快速校验"
-    if (-not (Test-Path $profileTarget)) { throw "Profile symlink 不存在。" }
-    if (-not (Test-Path $themeTarget))   { throw "Theme symlink 不存在。" }
+    Write-Step "Quick verification"
+    if (-not (Test-Path $profileTarget)) { throw "Profile symlink missing." }
+    if (-not (Test-Path $themeTarget))   { throw "Theme symlink missing." }
     $ompCmd2 = Get-Command oh-my-posh -ErrorAction SilentlyContinue
     if (-not $ompCmd2) {
-        Write-Host "警告: oh-my-posh 仍不可用，可能需要重开终端后 PATH 才生效。" -ForegroundColor Yellow
+        Write-Host "Warning: oh-my-posh still not found. You may need to restart the terminal for PATH changes to take effect." -ForegroundColor Yellow
     }
 
-    Write-Host "`nSetup 完成。" -ForegroundColor Green
+    Write-Host "`nSetup complete." -ForegroundColor Green
     Write-Host "Repo:    $repoRoot" -ForegroundColor DarkGray
-    Write-Host "备份目录: $backupDir" -ForegroundColor DarkGray
-    Write-Host "请重启 PowerShell 使配置生效。" -ForegroundColor Yellow
+    Write-Host "Backup:  $backupDir" -ForegroundColor DarkGray
+    Write-Host "Please restart PowerShell for changes to take effect." -ForegroundColor Yellow
 }
 catch {
-    Write-Host "`nSetup 失败: $($_.Exception.Message)" -ForegroundColor Red
-    Write-Host "正在回滚..." -ForegroundColor Yellow
+    Write-Host "`nSetup failed: $($_.Exception.Message)" -ForegroundColor Red
+    Write-Host "Rolling back..." -ForegroundColor Yellow
     Restore-IfBackedUp -OriginalPath $profileTarget
     Restore-IfBackedUp -OriginalPath $themeTarget
-    Write-Host "回滚完成，已恢复到之前状态。" -ForegroundColor Yellow
+    Write-Host "Rollback complete, restored previous state." -ForegroundColor Yellow
     exit 1
 }

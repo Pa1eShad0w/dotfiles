@@ -25,7 +25,7 @@ Clone this repo, then run the platform setup script. It installs dependencies an
 ### Windows (PowerShell)
 
 ```powershell
-git clone git@github.com:Pa1eShad0w/dotfiles.git ~/Repos/dotfiles; ~/Repos/dotfiles/windows/setup.ps1
+git clone git@github.com:Pa1eShad0w/dotfiles.git $HOME\Repos\dotfiles; & $HOME\Repos\dotfiles\windows\setup.ps1
 ```
 
 > Requires **Developer Mode** enabled (Settings → For Developers) for symlink support.
