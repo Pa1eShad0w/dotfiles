@@ -116,6 +116,37 @@ elif [[ "${SHELL_NAME}" == "bash" ]]; then
     ensure_package bash-completion@2
 fi
 
+migrate_local_overrides() {
+    local old_profile="$1"
+    local local_file="${HOME}/.zshrc.local"
+
+    # Only migrate from a real file (not our own symlink)
+    [[ -f "$old_profile" && ! -L "$old_profile" ]] || return 0
+
+    # Collect export PATH / path additions that aren't from our managed config
+    local custom_lines
+    custom_lines=$(grep -E '^\s*(export\s+)?PATH=|^\s*path\+?=' "$old_profile" 2>/dev/null || true)
+    [[ -z "$custom_lines" ]] && return 0
+
+    if [[ -f "$local_file" ]]; then
+        # Avoid duplicating lines already present
+        local new_lines=""
+        while IFS= read -r line; do
+            grep -qxF "$line" "$local_file" || new_lines+="${line}"$'\n'
+        done <<< "$custom_lines"
+        custom_lines="$new_lines"
+    fi
+
+    [[ -z "$custom_lines" ]] && return 0
+
+    printf "\n# Migrated from old %s (%s)\n%s" \
+        "$(basename "$old_profile")" "$(date +%Y-%m-%d)" "$custom_lines" >> "$local_file"
+    printf "  已将自定义 PATH 迁移到: %s\n" "$local_file"
+}
+
+log "Migrating local overrides"
+migrate_local_overrides "$PROFILE_TARGET"
+
 log "Creating symlinks"
 create_symlink "$THEME_SOURCE"   "$THEME_TARGET"
 create_symlink "$PROFILE_SOURCE" "$PROFILE_TARGET"
@@ -132,4 +163,5 @@ printf "Shell:   %s\n" "$SHELL_NAME"
 printf "Profile: %s -> %s\n" "$PROFILE_TARGET" "$PROFILE_SOURCE"
 printf "Theme:   %s -> %s\n" "$THEME_TARGET" "$THEME_SOURCE"
 printf "Backup:  %s\n" "${BACKUP_DIR}"
+printf "Local:   %s (自定义 PATH/alias 放这里，不会被覆盖)\n" "${HOME}/.zshrc.local"
 printf "Open a new terminal, or run: %s\n" "${SOURCE_HINT}"

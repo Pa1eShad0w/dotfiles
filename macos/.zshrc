@@ -7,6 +7,9 @@ elif [[ -x /usr/local/bin/brew ]]; then
     eval "$(/usr/local/bin/brew shellenv)"
 fi
 
+# ── User-local binaries (e.g. Claude Code) ──────────────────────────────
+[[ -d "${HOME}/.local/bin" ]] && export PATH="${HOME}/.local/bin:${PATH}"
+
 # ── Prompt theme ───────────────────────────────────────────────
 OMP_THEME="${HOME}/.config/oh-my-posh/agnosterplus.omp.json"
 if command -v oh-my-posh >/dev/null 2>&1 && [[ -f "$OMP_THEME" ]]; then
@@ -104,3 +107,6 @@ if command -v zoxide >/dev/null 2>&1 && command -v fzf >/dev/null 2>&1; then
         && z "$dir"
     }
 fi
+
+# ── Local overrides (not tracked by dotfiles) ────────────────────────────
+[[ -f "${HOME}/.zshrc.local" ]] && source "${HOME}/.zshrc.local"
