@@ -108,5 +108,25 @@ if command -v zoxide >/dev/null 2>&1 && command -v fzf >/dev/null 2>&1; then
     }
 fi
 
+# ── zc: z into a directory then launch claude ──────────────────────────
+if command -v zoxide >/dev/null 2>&1; then
+    zc() {
+        if [[ $# -eq 0 ]]; then
+            echo "Usage: zc <query> [claude-args...]" >&2
+            return 1
+        fi
+        local query=$1; shift
+        local dir
+        dir=$(zoxide query -- "$query" 2>/dev/null)
+        if [[ -z "$dir" ]]; then
+            echo "zoxide: no match for '$query'" >&2
+            return 1
+        fi
+        zoxide add "$dir"
+        cd "$dir" || return
+        claude "$@"
+    }
+fi
+
 # ── Local overrides (not tracked by dotfiles) ────────────────────────────
 [[ -f "${HOME}/.zshrc.local" ]] && source "${HOME}/.zshrc.local"
