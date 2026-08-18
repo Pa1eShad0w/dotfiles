@@ -151,6 +151,21 @@ function Toggle-ProfileVerbose {
 function Enable-HistoryPrediction  { Set-PSReadLineOption -PredictionSource History }
 function Disable-HistoryPrediction { Set-PSReadLineOption -PredictionSource None }
 
+# ── claude wrapper: inject --permission-mode auto unless caller overrides ────
+# settings.json keeps SDK-valid "default" so Zed ACP can start a session;
+# terminal claude keeps "auto" UX via this function. `zc` calls `& claude`
+# which resolves to this function, so zc inherits the same behavior.
+function claude {
+    $claudeExe = 'C:\Users\mawenzhe\.local\bin\claude.exe'
+    $hasMode = $false
+    foreach ($a in $args) {
+        if ($a -eq '--permission-mode' -or ($a -is [string] -and $a.StartsWith('--permission-mode='))) {
+            $hasMode = $true; break
+        }
+    }
+    if ($hasMode) { & $claudeExe @args } else { & $claudeExe --permission-mode auto @args }
+}
+
 # ── Measure-ProfileLoad ───────────────────────────────────────────────────────
 function Measure-ProfileLoad {
     $omp_theme_path = Join-Path $HOME ".config\oh-my-posh\agnosterplus.omp.json"
