@@ -113,14 +113,26 @@ function New-Symlink {
 }
 
 try {
+    # PSGallery requires TLS 1.2; Windows PowerShell 5.1 defaults to older protocols
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+
     Write-Step "Backing up existing config"
     Backup-IfExists -Path $profileTarget
     Backup-IfExists -Path $themeTarget
 
     Write-Step "Ensuring NuGet provider"
     if (-not (Get-PackageProvider -Name NuGet -ListAvailable -ErrorAction SilentlyContinue)) {
-        Install-PackageProvider -Name NuGet -Scope CurrentUser -Force -SkipPublisherCheck | Out-Null
+        Install-PackageProvider -Name NuGet -Scope CurrentUser -Force | Out-Null
     }
+
+    Write-Step "Ensuring PowerShellGet >= 2.x"
+    $psGet = Get-Module -ListAvailable -Name PowerShellGet | Sort-Object Version -Descending | Select-Object -First 1
+    if (-not $psGet -or $psGet.Version -lt [version]"2.0.0") {
+        Write-Host "PowerShellGet missing or too old (Install-Module -SkipPublisherCheck/-AllowClobber require >= 2.x). Updating..." -ForegroundColor Yellow
+        Install-Module -Name PowerShellGet -Scope CurrentUser -Force
+        throw "PowerShellGet updated. Rerun setup.ps1 in a NEW elevated PowerShell window (this session still has the old version loaded)."
+    }
+    Write-Host "PowerShellGet ok: $($psGet.Version)" -ForegroundColor DarkGray
 
     Write-Step "Installing/verifying oh-my-posh"
     $ompCmd = Get-Command oh-my-posh -ErrorAction SilentlyContinue
